@@ -158,7 +158,7 @@ abstract class Captcha
 	public function update_response_session()
 	{
 		// Store the correct Captcha response in a session
-		Session::instance()->set('captcha_response', sha1(utf8::strtoupper($this->response)));
+		Session::instance()->set('captcha_response', sha1(UTF8::strtoupper($this->response)));
 	}
 
 	/**
@@ -178,7 +178,7 @@ abstract class Captcha
 			return TRUE;
 
 		// Challenge result
-		$result = (bool) (sha1(utf8::strtoupper($response)) === Session::instance()->get('captcha_response'));
+		$result = (bool) (sha1(UTF8::strtoupper($response)) === Session::instance()->get('captcha_response'));
 
 		// Increment response counter
 		if ($counted !== TRUE)
@@ -245,6 +245,16 @@ abstract class Captcha
 	public function invalid_count($new_count = NULL)
 	{
 		return $this->valid_count($new_count, TRUE);
+	}
+	
+	/**
+	 * Invalidate a captcha session, so prevent that same captcha_reponse can be used again
+	 *
+	 * @return void
+	 */
+	public static function invalidate()
+	{
+		Session::instance()->delete('captcha_response');
 	}
 
 	/**
@@ -431,13 +441,14 @@ abstract class Captcha
 	{
 		// Output html element
 		if ($html === TRUE)
-			return '<img src="'.url::site('captcha/'.Captcha::$config['group']).'" width="'.Captcha::$config['width'].'" height="'.Captcha::$config['height'].'" alt="Captcha" class="captcha" />';
-
+			return '<img src="'.url::site('captcha/'.Captcha::$config['group']).'?id='.uniqid().'" width="'.Captcha::$config['width'].'" height="'.Captcha::$config['height'].'" alt="Captcha" class="captcha" />';
+		
 		// Send the correct HTTP header
-        Request::instance()->headers['Content-Type'] = 'image/'.$this->image_type;
-        Request::instance()->headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0';
-        Request::instance()->headers['Pragma'] = 'no-cache';
-        Request::instance()->headers['Connection'] = 'close';
+		Request::current()
+			->headers('Content-Type', 'image/'.$this->image_type)
+			->headers('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0')
+			->headers('Pragma', 'no-cache')
+			->headers('Connection', 'close');
 
 		// Pick the correct output function
 		$function = 'image'.$this->image_type;
