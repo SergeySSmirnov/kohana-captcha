@@ -27,6 +27,7 @@ class Controller_Captcha extends Controller {
 	 */
 	public function action_index()
 	{
+		error_reporting(($last_er = error_reporting()) & ~E_NOTICE); // Disable notice messages
 		// Output the Captcha challenge resource (no html)
 		// Pull the config group name from the URL
 		$group = $this->request->param('group', 'default');
